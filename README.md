@@ -35,7 +35,7 @@ No service-role key is needed. Stripe onboarding, direct-charge Checkout, a 10% 
 
 ## Stripe Connect sandbox payments
 
-Sellers open **Profile > Seller payments / Connect with Stripe**, then complete Stripe-hosted onboarding with test data. The connected account ID and readiness flags are saved privately in Supabase. Available listings show **Buy Now** only when their linked seller can receive payments. Orders and sales are available from the Profile menu. Existing listings without a seller account ID are not automatically claimed by email.
+Sellers open **Profile > Seller payments / Connect with Stripe**, then complete Stripe-hosted onboarding with test data. New connected accounts use Accounts v2 with Stripe-managed losses and a full Stripe dashboard, as required by the supplied sandbox; direct charges still use the connected account scope. The connected account ID and readiness flags are saved privately in Supabase. Available listings show **Buy Now** only when their linked seller can receive payments. Orders and sales are available from the Profile menu. Existing listings without a seller account ID are not automatically claimed by email.
 
 Checkout uses a direct charge on the seller connected account and collects a 10% application fee. Prices and fees come from the database, never from the browser. Each listing represents one item and is reserved during Checkout. Stripe processing fees are separate from the platform fee. The buyer cannot buy their own listing.
 

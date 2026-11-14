@@ -30,15 +30,26 @@ export async function POST(request: Request) {
     const stripe = getStripe();
     const { data, error } = await admin.from("seller_accounts").select("stripe_account_id").eq("seller_id", user.id).maybeSingle();
     if (error) throw new PaymentError("Payment setup is unavailable. Apply the payment database migration first.", 503);
-    const platform = data ? null : await stripe.accounts.retrieveCurrent();
-    const account = data ? await stripe.accounts.retrieve(data.stripe_account_id) : await stripe.accounts.create({ type: "express", country: platform?.country ?? "US", email: user.email,
-      capabilities: { card_payments: { requested: true }, transfers: { requested: true } },
-      metadata: { marketplace_id: marketplaceId(), seller_id: user.id },
-      business_profile: { product_description: "Test marketplace purchases on Emarketplace" },
-    }, { idempotencyKey: `connect-${marketplaceId()}-${user.id}` });
+    let accountId = data?.stripe_account_id;
+    if (!accountId) {
+      const platform = await stripe.accounts.retrieveCurrent();
+      const created = await stripe.v2.core.accounts.create({
+        contact_email: user.email, display_name: "Emarketplace seller", dashboard: "full",
+        identity: { country: platform.country ?? "US" },
+        defaults: { responsibilities: { fees_collector: "stripe", losses_collector: "stripe" } },
+        configuration: { merchant: { capabilities: { card_payments: { requested: true } } } },
+        metadata: { marketplace_id: marketplaceId(), seller_id: user.id },
+      }, { idempotencyKey: `connect-v2-managed-${marketplaceId()}-${user.id}` });
+      accountId = created.id;
+    }
+    // Stripe exposes the account's payment-readiness projection through Accounts v1.
+    const account = await stripe.accounts.retrieve(accountId);
     await syncAccount(account, user.id);
-    const link = await stripe.accountLinks.create({ account: account.id, type: "account_onboarding",
-      refresh_url: `${appUrl()}/seller/payments?refresh=1`, return_url: `${appUrl()}/seller/payments?returned=1` });
+    const link = await stripe.v2.core.accountLinks.create({ account: account.id, use_case: {
+      type: "account_onboarding", account_onboarding: {
+        refresh_url: `${appUrl()}/seller/payments?refresh=1`, return_url: `${appUrl()}/seller/payments?returned=1`,
+      },
+    } });
     return Response.json({ url: link.url });
   } catch (error) { return paymentFailure(error); }
 }

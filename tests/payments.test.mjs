@@ -78,3 +78,35 @@ test("expired Checkout sessions release their reservation rather than becoming p
   await handleStripeEvent(event(session, "acct_ours", "checkout.session.expired"));
   assert.equal(current.rpc[0][0], "expire_checkout");
 });
+
+const connectServerUrl = dataUrl(`
+export class PaymentError extends Error { constructor(message,status=400){super(message);this.status=status;} }
+export const requirePaymentUser=async()=>({user:{id:"seller-test",email:"seller@example.com"}});
+export const getPaymentAdmin=()=>globalThis.__connectTest.admin;
+export const getStripe=()=>globalThis.__connectTest.stripe;
+export const marketplaceId=()=>"ours";
+export const appUrl=()=>"https://example.com";
+export const paymentFailure=error=>Response.json({error:error.message},{status:error.status||503});
+`);
+const connectSource = compile("src/app/api/stripe/connect/route.ts").replace('"@/lib/stripe/server"', JSON.stringify(connectServerUrl));
+const { POST: connectSeller } = await import(dataUrl(connectSource));
+test("seller onboarding uses sandbox-supported managed-risk Accounts v2 and persists its account ID", async () => {
+  let creation, link, saved;
+  const projection = { id: "acct_new", charges_enabled: false, payouts_enabled: false, details_submitted: false };
+  const chain = { select: () => chain, eq: () => chain, maybeSingle: async () => ({data:null,error:null}) };
+  globalThis.__connectTest = {
+    admin: { from: () => ({...chain,upsert:async row=>{saved=row;return {error:null}}}) },
+    stripe: { accounts: { retrieveCurrent:async()=>({country:"EE"}),retrieve:async()=>projection,create:()=>{throw new Error("Legacy account creation must not be used")}},
+      v2: { core: { accounts: { create:async(params)=>{creation=params;return {id:"acct_new"}}},accountLinks:{create:async(params)=>{link=params;return {url:"https://connect.stripe.com/test-link"}}} } } },
+  };
+  const response = await connectSeller(new Request("https://example.com/api/stripe/connect",{method:"POST"}));
+  assert.equal(response.status,200);
+  assert.equal(creation.defaults.responsibilities.losses_collector,"stripe");
+  assert.equal(creation.defaults.responsibilities.fees_collector,"stripe");
+  assert.equal(creation.dashboard,"full");
+  assert.equal(creation.identity.country,"EE");
+  assert.equal(creation.configuration.merchant.capabilities.card_payments.requested,true);
+  assert.equal(saved.stripe_account_id,"acct_new");
+  assert.equal(link.use_case.type,"account_onboarding");
+  assert.equal(link.use_case.account_onboarding.return_url,"https://example.com/seller/payments?returned=1");
+});
