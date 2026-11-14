@@ -1,130 +1,148 @@
 # Emarketplace
 
-A student-inspired marketplace for the Test 3 developer challenge, built using **React 19, Next.js 15 (App Router), Supabase Postgres + Storage, Tailwind CSS 3, and shadcn/ui-style source components**.
+A community marketplace built with Next.js 15, React 19, Supabase Postgres and Storage, Tailwind CSS, and Resend. Visitors can browse, sell, and contact sellers without creating an account.
 
-The source code contains functional UI for all four required features:
+**Live site: [emarketplace-eli.vercel.app](https://emarketplace-eli.vercel.app/)**
 
-- **Create listing:** a required product photo, title, category, price, seller email; description; optional location. Files upload to Supabase Storage (`listing-images`), then the listing is saved in Supabase Postgres (`public.listings`).
-- **Browse and filter:** public listings loaded newest first; category filters and keyword search (bonus); mobile-friendly card grid.
-- **Detail route:** `/item/[id]` with product photo, full description, price, location, category, seller email, and timestamp.
-- **Message seller:** a buyer enters their email and message. A row is inserted into `public.messages` with `listing_id`, `buyer_email`, and `seller_email`. The server then sends a notification using Resend, with the buyer email as Reply-To. Email failure does not discard the saved message.
+## Features
 
-There is **no authentication**, as permitted by the challenge. The example has browser-only form validation; on a long-lived production service add authentication, spam/rate limits, server-side validation, moderation, and abuse protection. Seller email addresses are displayed publicly, as requested by the sample challenge. Only use test information.
+- **Create listings:** choose Item for sale, Vehicle for sale, or Home for sale or rent. Each type has relevant categories. Add a photo, title, description, price, and seller email, with an optional location. Photos upload to Supabase Storage and listings save to Postgres.
+- **Browse and filter:** listing cards, category filters, keyword search, minimum/maximum prices, and sorting by newest or price.
+- **Listing details:** each listing has its own page with a photo, full description, price, category, location, and seller information.
+- **Message sellers:** buyer messages save to Supabase before the server attempts a Resend email notification. The buyer's email is the Reply-To address.
+- **Sent-message history:** the Messages icon shows the latest 100 messages sent from this browser, with listing links, timestamps, and email notification status. Replies arrive by email.
+- **Wishlist:** heart buttons save favorites in browser local storage. Saved listings persist after refreshing, sync across tabs, and support the normal search, filter, and comparison controls.
+- **Product comparison:** select two or three listings and compare prices, conditions, locations, categories, and descriptions side by side.
+- **Share links:** copy a listing's URL from its detail page. A selectable link is provided when clipboard access is blocked.
+- **Responsive interface:** Emarketplace branding, Plus Jakarta Sans and Inter typography, loading animations, modern dropdowns, and slim scrollbars that appear near the scrollable edge.
 
-## Already set up Supabase? Start here
-
-You do **not** need to run the SQL schema again if you already created the following:
-
-1. In **Table Editor**, verify `public.listings` columns: `id`, `title`, `description`, `price`, `category`, `seller_email`, `image_url`, `location`, `created_at`, `updated_at`.
-2. Verify `public.messages` columns: `id`, `listing_id` (FK to `listings.id`), `buyer_email`, `seller_email`, `message`, `created_at`.
-3. In **Storage**, verify the **public** bucket is exactly named **`listing-images`** (case-sensitive). It should allow JPG, PNG, and WebP, up to 5 MB.
-4. Verify anonymous/public-key clients have `SELECT` and `INSERT` access to `public.listings`, `INSERT` access to `public.messages`, and `INSERT` access to `storage.objects` for `bucket_id = 'listing-images'`, with RLS policies allowing these operations.
-5. For privacy, the challenge's example policy `"Anyone can view messages"` exposes all buyers' emails and messages. You can remove it using `supabase/privacy-fix-if-you-used-sample.sql`; the app does not require public message reads.
-
-For a **brand-new** Supabase project, the complete SQL is in `supabase/schema-for-new-project.sql`.
-
-## Setup on your computer
+## Local setup
 
 Requires Node.js 20.9+ and npm.
 
 ```bash
 npm install
-cp .env.example .env.local  # on Windows: copy .env.example .env.local
 ```
 
-Edit `.env.local`:
+Copy `.env.example` to `.env.local`:
+
+```powershell
+# Windows PowerShell
+Copy-Item .env.example .env.local
+```
+
+```bash
+# macOS / Linux
+cp .env.example .env.local
+```
+
+Set these values in `.env.local`:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_PUBLIC_PUBLISHABLE_OR_ANON_KEY
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-public-anon-or-publishable-key
+RESEND_API_KEY=your-resend-api-key
+RESEND_FROM_EMAIL="Emarketplace <onboarding@resend.dev>"
 ```
 
-Get these values in Supabase Dashboard **Connect** or **Project Settings → API Keys**. The variable name `ANON_KEY` works with either the legacy public anon key or modern publishable key. **NEVER** use the service-role key, secret key, or database password here. `.env.local` is excluded from Git by `.gitignore`.
-
-Then:
+Use a public Supabase anon or publishable key, never a service-role key. The Resend variables are server-only and must not have a `NEXT_PUBLIC_` prefix. Keep `.env.local` out of version control.
 
 ```bash
 npm run dev
 ```
 
-Open http://localhost:3000.
+Open [localhost:3000](http://localhost:3000). Development uses `.next-dev`; production builds use `.next`, so a build does not overwrite the running development server's files.
 
-## Test all four criteria
+## Supabase setup
 
-1. Click **Create new listing**, choose a listing type,, upload a JPG/PNG/WebP smaller than 5 MB, fill required fields, and publish.
-2. The app redirects to the saved listing's unique detail page. In Supabase **Table Editor → listings**, verify the row exists.
-3. In Supabase **Storage → listing-images**, verify an uploaded file exists under `listings/`.
-4. Return home, refresh, and verify the listing still appears. Try category filtering and search.
-5. Open the item detail page, enter a buyer email/message, and click **Send message**.
-6. Verify the new record in Supabase **Table Editor → messages**. The confirmation distinguishes a saved message from a saved message with a successful email API response. Verify email arrival in the seller inbox when Resend is configured.
-7. Run `npm run build` before deployment and resolve any errors.
+For a new project, use [schema-for-new-project.sql](supabase/schema-for-new-project.sql). If your tables and bucket already exist, verify the following instead of rerunning setup:
 
-## Deploy using GitHub → Vercel
+| Resource | Required configuration |
+| --- | --- |
+| `public.listings` | `id`, `title`, `description`, `price`, `category`, `seller_email`, `image_url`, `location`, `created_at`, `updated_at` |
+| `public.messages` | `id`, `listing_id` referencing `listings.id`, `buyer_email`, `seller_email`, `message`, `created_at` |
+| Storage | Public bucket named `listing-images`, allowing JPG, PNG, and WebP up to 5 MB |
+| Anonymous permissions | `SELECT` and `INSERT` on listings, `INSERT` on messages, and uploads to the `listing-images` bucket |
 
-1. Push this **project folder** to a new **public** GitHub repository. Do not commit `.env.local`.
-2. On Vercel, click **Add New → Project**, import that repository, and set framework = Next.js.
-3. In Vercel **Environment Variables**, add the same two `NEXT_PUBLIC_SUPABASE_*` variables for **Production**.
-4. Deploy. Submit your **production** URL (`https://your-app.vercel.app`), public GitHub repository, and **screenshots of the deployed functional app**, at https://apply.capm.us (select **3) Marketplace**).
-5. Optional: record an up-to-three-minute demo of listing creation, browsing/category filtering, detail page, and buyer message persistence.
+Both grants and row-level security policies must allow these operations. Public message reads are unnecessary. If you used the sample public message-read policy, see [privacy-fix-if-you-used-sample.sql](supabase/privacy-fix-if-you-used-sample.sql).
+
+## Seller email notifications
+
+The browser submits to `/api/messages`. The server validates the input, looks up the seller address from the listing, saves the message, and calls Resend. The browser cannot override the recipient. Emails include the listing title and buyer's message, with the buyer's address as Reply-To.
+
+Without a verified domain, use `Emarketplace <onboarding@resend.dev>`. This test sender can only send to the email address associated with your Resend account. Use that address as the listing's seller email when testing. Sending to other sellers requires a verified domain and a matching sender address. See [Resend's sender restrictions](https://resend.com/docs/knowledge-base/403-error-resend-dev-domain).
+
+An email failure does not discard the saved message. The interface distinguishes saved messages from messages whose notification was accepted by Resend. API acceptance does not guarantee inbox delivery; check the seller inbox, Spam folder, and Resend logs.
+
+## Browser-local features
+
+Wishlist IDs are stored under `emarketplace.wishlist.v1`. Sent-message history is stored under `emarketplace.sent-messages.v1`. These features do not require additional Supabase tables.
+
+History and favorites belong to the browser profile and are visible to anyone using it. They do not sync between devices. Clearing local sent-message history does not delete Supabase records. Messages sent before the history feature was added are not imported. If browser storage is blocked, these features work only for the current session.
+
+Comparison selections remain while changing homepage filters. The supplied database schema has no dedicated condition field, so comparison shows **Not specified** when condition is unavailable. If an optional `condition` column exists, the homepage includes it automatically. Condition is never guessed from the description.
+
+## Verification
+
+```bash
+npm run typecheck
+npm test
+npm run build
+```
+
+Tests cover source contracts and logic for listing-type categories, comparison limits, message-save/email outcomes, sent-message storage, and wishlist serialization. They do not replace end-to-end checks against the deployed site.
+
+To verify the required workflows:
+
+1. Open the live site, click **Create new listing**, and choose a listing type.
+2. Add a photo and required details, then publish. Verify the listing row and Storage photo in Supabase.
+3. Return home and refresh. Confirm the listing appears and category filters work.
+4. Open the listing and confirm its photo and full details.
+5. Submit **Message Seller**. Verify the new row in Supabase `messages` and, when the sender is allowed to email that seller, check the seller inbox and Resend logs.
+6. Test wishlist persistence after refreshing, comparison of two or three listings, sent-message history, and the Share button.
+
+## Deployment on Vercel
+
+The published site is [Emarketplace](https://emarketplace-eli.vercel.app/).
+
+To deploy updates, use the connected repository or import the project into Vercel with the Next.js framework preset. Configure the following environment variables for the relevant deployment environment:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `RESEND_API_KEY`
+- `RESEND_FROM_EMAIL`
+
+Redeploy after changing environment variables. Keep credentials in Vercel's environment settings rather than source control.
 
 ## Troubleshooting
 
-| Error | Most likely cause / fix |
-|---|---|
-| `Bucket not found` | Create a public Storage bucket named **`listing-images`** in the same Supabase project as `.env.local`. |
-| `new row violates row-level security policy` | Verify table/storage policies allow anonymous INSERT; use the SQL provided or inspect your RLS policies. |
-| `permission denied for table` | Both SQL grants and RLS policies must allow the operation. |
-| `Could not find the table` or `column ... does not exist` | Check schema/column names exactly; they must match the supplied Test 3 schema. |
-| Listings don't load | Verify `SELECT` grant and RLS policy on `public.listings`, project URL, and browser Network panel. |
-| Photos load poorly | Bucket must be public; URLs must be generated via `.getPublicUrl(uploaded.path)`. |
-| Public app doesn't connect | Add env vars in Vercel **Production**, then redeploy. |
-| Messages don't arrive as email | Check RESEND_API_KEY and RESEND_FROM_EMAIL on the server, verify the sender domain in Resend, and check Resend logs. |
+| Issue | Check |
+| --- | --- |
+| `Bucket not found` | The public Storage bucket must be named `listing-images` in the configured Supabase project. |
+| Row-level security or permission errors | Verify table grants and RLS policies for anonymous listing reads/inserts, message inserts, and Storage uploads. |
+| Missing table or column | Match the schema names listed above. |
+| Listings do not load | Check the Supabase URL, public key, and listing read permissions. |
+| Photos do not load | Confirm the bucket is public and the stored image URL is its public URL. |
+| Seller notification fails | Check Resend environment variables, sender restrictions, and Resend logs. Messages may still be saved successfully. |
+| Favorites or history disappear | Check browser storage settings and whether you are using a different browser profile or device. |
+| Deployment cannot connect | Configure the environment variables in Vercel and redeploy. |
 
-## Structure
+## Project structure
 
-```
+```text
 src/
   app/
-    page.tsx                   # Browse all listings, search/filter
-    create/page.tsx            # Create listing
-    item/[id]/page.tsx         # Individual listing and buyer messages
-    layout.tsx                 # Shared header/footer
-    globals.css                # Responsive visual design
+    page.tsx                   # Marketplace feed
+    create/page.tsx            # Listing-type chooser
+    create/[type]/page.tsx     # Listing creation form
+    item/[id]/page.tsx         # Listing details and messaging
+    api/messages/route.ts      # Save messages and notify sellers
+    layout.tsx                 # Shared header and wishlist provider
+    globals.css                # Responsive styles
   components/
-    marketplace/              # Functional feature components
-    ui/                       # shadcn/ui style Button, Card, Input, etc.
-  lib/
-    supabase.ts                # Public Supabase client
-    marketplace.ts             # Types, categories, validation, formatting
-supabase/                      # SQL reference + privacy hardening
+    marketplace/               # Listings, comparison, wishlist, messaging
+    ui/                        # Shared controls and scrollbar behavior
+  lib/                         # Supabase client, validation, storage helpers
+supabase/                      # Schema and privacy policy reference
+tests/                        # Automated checks
 ```
-
-## Verification note
-
-This project is packaged with source-level contract tests. **Live posting, Storage uploads, and Vercel deployment can only be verified after you configure your own Supabase credentials.** The ZIP does not contain your private environment values, and it does not include a live deployed site.
-
-## Seller email notifications (Resend)
-
-Message Seller posts to the server route `/api/messages`. The server validates the request, reads the seller address from the listing, saves the message in Supabase, then calls Resend. No login or Supabase service-role key is required. Buyers cannot override the recipient. Emails contain the listing title, buyer email, and plain-text message; replying goes to the buyer.
-
-Set `RESEND_API_KEY` and `RESEND_FROM_EMAIL` in `.env.local` and your deployment's server environment. Never use a `NEXT_PUBLIC_` prefix for these values. Redeploy after changing production environment variables.
-
-Use a sender such as `Emarketplace <notifications@your-verified-domain.com>` on a domain verified in Resend. The default `onboarding@resend.dev` test sender can only deliver to your Resend account email. See [Resend sender restrictions](https://resend.com/docs/knowledge-base/403-error-resend-dev-domain).
-
-Messages remain saved if Resend is unavailable or rejects the email. The UI reports that partial success without inviting a duplicate submission. A successful API response means Resend accepted the notification, not guaranteed inbox delivery. Check Resend delivery logs and the seller inbox for end-to-end verification.
-
-## Product comparison
-
-Use Compare on listing cards to select two or three listings, then open the floating comparison panel. Selections remain while changing homepage search, price, sort, and category filters. Compare prices, conditions, locations, categories, and full descriptions, and follow View listing for more details. Remove a selection or clear the tray to start again. The table scrolls horizontally on small screens and the dialog supports Escape and keyboard navigation.
-
-Existing listings do not have a dedicated condition column in the supplied Supabase schema. Comparison displays Not specified when condition is unavailable; it never guesses condition from the description. If a nullable condition column already exists, the homepage fetch includes it automatically.
-
-## Sent-message history
-
-The header Messages icon shows the latest 100 messages successfully submitted from this browser, with listing links and email notification status. History is stored locally and is visible to anyone using the same browser profile. Clear local history removes these local copies without deleting the Supabase records. Earlier submissions and messages sent on other devices are not imported. Seller replies arrive at the buyer's email address; this is sent-message history, not an in-app inbox. Public access to Supabase messages is not required or enabled by this feature.
-
-## Wishlist
-
-Tap the heart on a listing card or item details page to save it. Open Saved listings in the marketplace sidebar to browse favorites, then use the usual search, category, price, sort, and comparison controls. Tap the heart again to remove a favorite. Listing IDs are stored under emarketplace.wishlist.v1 in this browser's local storage and synchronize across tabs. No login or new Supabase table is needed. If browser storage is blocked, favorites remain only for the current session. Unavailable listings are omitted from the saved view.
-#   e m a r k e t p l a c e  
- 
