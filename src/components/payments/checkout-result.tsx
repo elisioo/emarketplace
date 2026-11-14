@@ -5,7 +5,7 @@ import { CheckCircle2, Clock3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LoadingIndicator } from "@/components/marketplace/loading";
 import { paymentRequest } from "@/components/payments/payment-request";
-import { formatPrice } from "@/lib/marketplace";
+import { PaymentBreakdown } from "@/components/payments/payment-breakdown";
 import type { PaymentOrder } from "@/lib/payments";
 
 export function CheckoutResult({ orderId, cancel = false }: { orderId: string; cancel?: boolean }) {
@@ -40,7 +40,8 @@ export function CheckoutResult({ orderId, cancel = false }: { orderId: string; c
       {paid ? <CheckCircle2 size={42} className="checkout-success-icon"/> : <Clock3 size={42} className="checkout-waiting-icon"/>}
       <h1>{paid ? "Payment confirmed!" : cancelled || order?.status === "expired" ? "Checkout cancelled" : "Waiting for payment confirmation"}</h1>
       <p className="payments-intro">{paid ? "Your order is saved and the listing is marked Sold." : cancelled || order?.status === "expired" ? "This checkout is closed. The listing can be purchased again if it remains available." : "We are waiting for Stripe's signed payment confirmation. This page does not mark an order as paid by itself."}</p>
-      {order && <dl className="order-summary"><div><dt>Listing</dt><dd>{order.listing_title}</dd></div><div><dt>Total</dt><dd>{formatPrice(order.amount_cents / 100)}</dd></div><div><dt>Order ID</dt><dd>{order.id}</dd></div><div><dt>Status</dt><dd>{order.status}</dd></div></dl>}
+      {order && <dl className="order-summary"><div><dt>Listing</dt><dd>{order.listing_title}</dd></div><div><dt>Order ID</dt><dd>{order.id}</dd></div><div><dt>Status</dt><dd>{order.status}</dd></div></dl>}
+      {order && <PaymentBreakdown amountCents={order.amount_cents} feeCents={order.fee_cents} paid={paid}/>}
       {error && <p className="form-error" role="alert">{error}</p>}
       <div className="payments-actions">{!paid && !cancelled && <Button variant="outline" onClick={() => setVersion(current => current + 1)}>Refresh confirmation</Button>}<Button asChild><Link href={order ? `/item/${order.listing_id}` : "/"}>{paid ? "View purchased listing" : "Back to marketplace"}</Link></Button></div>
     </>}

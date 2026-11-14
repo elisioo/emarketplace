@@ -779,3 +779,22 @@ a.listing-type-nav:hover, .seller-help summary:hover { background: #f0f2f5; }
 .order-status.paid { color: #388f68; background: #eefaf3; }
 .order-status.expired { color: #939eac; background: #f1f3f7; }
 @media (max-width: 600px) { .payments-card { padding: 24px 20px; } .payments-card h1 { font-size: 24px; } .stripe-status-grid { grid-template-columns: 1fr; } .payments-actions { flex-direction: column; } .order-row { gap: 10px; padding: 15px; flex-wrap: wrap; } }
+
+.payment-breakdown { margin: 20px 0 8px; padding: 20px; border: 1px solid #dce8f8; border-radius: 12px; background: #fbfdff; }
+.payment-breakdown h2 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 700; color: #4d6b90; margin: 0 0 15px; }
+.payment-breakdown dl { margin: 0; }
+.payment-breakdown dl > div { display: flex; justify-content: space-between; gap: 20px; padding: 8px 0; font-size: 13px; }
+.payment-breakdown dt { color: #8a9bb2; }
+.payment-breakdown dd { margin: 0; color: #55759a; font-weight: 600; }
+.payment-breakdown .seller-share { margin-top: 8px; padding-top: 14px; border-top: 1px solid #e5ecf6; }
+.payment-breakdown .seller-share dt, .payment-breakdown .seller-share dd { color: #388c68; font-weight: 700; }
+.payment-breakdown > p { color: #94a2b5; font-size: 11px; line-height: 1.7; margin: 14px 0 0; }
+.order-row.order-row-with-breakdown { display: block; }
+.order-row-heading { display: flex; gap: 20px; align-items: center; }
+.order-row-heading > div { flex: 1; min-width: 0; }
+.order-row-heading > div > strong { display: block; overflow-wrap: anywhere; }
+.order-row-heading > div > span { display: block; color: #98a6b8; font-size: 11px; margin-top: 7px; }
+.payment-breakdown.compact { margin: 18px 0 0; padding: 16px; }
+.payment-breakdown.compact h2 { font-size: 12px; margin-bottom: 8px; }
+.payment-breakdown.compact dl > div { font-size: 12px; padding: 6px 0; }
+@media (max-width: 600px) { .order-row-heading { gap: 10px; flex-wrap: wrap; } .payment-breakdown { padding: 16px; } }
