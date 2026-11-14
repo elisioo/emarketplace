@@ -5,15 +5,15 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#14213d",
-        brand: "#2e63b8",
-        canvas: "#f4f7fb",
-        line: "#dfe7f0",
-        muted: "#72829a",
+        ink: "#3d2d4c",
+        brand: "#8951a8",
+        canvas: "#fff7fb",
+        line: "#eadcec",
+        muted: "#8e749b",
       },
       boxShadow: {
-        card: "0 10px 30px rgba(31, 62, 109, 0.05)",
-        hover: "0 16px 35px rgba(31, 62, 109, 0.11)",
+        card: "0 10px 30px rgba(109, 64, 137, 0.05)",
+        hover: "0 16px 35px rgba(109, 64, 137, 0.11)",
       },
     },
   },
