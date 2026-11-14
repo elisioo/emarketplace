@@ -6,6 +6,7 @@ import { AlertTriangle, ArrowRight, LayoutGrid, Search, ShoppingBag, X, Car, Hou
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { useAuth } from "@/components/auth/auth-provider";
 import { useWishlist } from "@/components/marketplace/wishlist-provider";
 import { ListingComparison } from "@/components/marketplace/listing-comparison";
 import { MAX_COMPARISON_ITEMS, toggleComparison } from "@/lib/comparison";
@@ -16,6 +17,7 @@ import { getSupabase } from "@/lib/supabase";
 const categoryIcons = [Car, House, Shirt, Tag, Smartphone, Film, Heart, Gift, Flower2, Paintbrush, Sofa, Hammer, House, Music, BriefcaseBusiness, PawPrint, Bike, Puzzle, Users];
 
 export function MarketplaceFeed() {
+  const { role } = useAuth();
   const { ids: wishlistIds, persistent: wishlistPersistent } = useWishlist();
   const [savedOnly, setSavedOnly] = useState(false);
   const [listings, setListings] = useState<Listing[]>([]);
@@ -53,6 +55,14 @@ export function MarketplaceFeed() {
     return () => { active = false; };
   }, [refreshToken]);
 
+  useEffect(() => {
+    const client = getSupabase();
+    if (!client) return;
+    const refresh = () => { if (document.visibilityState === "visible") setRefreshToken(current => current + 1); };
+    window.addEventListener("focus", refresh);
+    return () => window.removeEventListener("focus", refresh);
+  }, []);
+
   const filtered = useMemo(() => {
     const items = listings.filter((item) => (!savedOnly || wishlistIds.includes(item.id)) && matchesListing(item, query, category)
       && (minPrice === "" || Number(item.price) >= Number(minPrice))
@@ -71,7 +81,7 @@ export function MarketplaceFeed() {
           <Input aria-label="Search Marketplace" placeholder="Search Marketplace" value={query} onChange={(e) => setQuery(e.target.value)}/>
           {query && <button type="button" aria-label="Clear search" onClick={() => setQuery("")}><X size={16}/></button>}
         </div>
-        <Button className="sidebar-create w-full" asChild><Link href="/create"><Plus size={18}/> Create new listing</Link></Button>
+        {role === "seller" && <Button className="sidebar-create w-full" asChild><Link href="/create"><Plus size={18}/> Create new listing</Link></Button>}
       </div>
       <div className="sidebar-filters">
         <label htmlFor="sort-listings">Sort by</label>
@@ -93,7 +103,7 @@ export function MarketplaceFeed() {
       {category !== "All" && <div className="category-summary"><span className="category-summary-icon">{(() => { const Icon = categoryIcons[CATEGORIES.indexOf(category as typeof CATEGORIES[number])]; return Icon ? <Icon size={24}/> : null; })()}</span><div><h3>Shop {category}</h3><p>Explore the latest listings in your community.</p></div></div>}
       {loading ? <div className="listing-grid" role="status" aria-label="Loading listings">{Array.from({ length: 8 }).map((_, i) => <div className="listing-skeleton" key={i}><div/><span/><span/></div>)}</div>
       : error ? <div className="empty-state error-state"><span className="empty-icon"><AlertTriangle size={32}/></span><h3>We couldn't load listings</h3><p>{error}</p><Button variant="outline" onClick={() => setRefreshToken((n)=>n+1)}>Try again</Button></div>
-      : filtered.length === 0 ? <div className="empty-state"><span className="empty-icon"><ShoppingBag size={36}/></span><h3>{savedOnly ? hasFilters ? "No saved listings match" : "No saved listings yet" : listings.length === 0 && !hasFilters ? "No listings yet" : "No listings found"}</h3><p>{savedOnly ? "Save listings with the heart button to find them here. Try clearing any filters or browse for more favorites." : listings.length === 0 && !hasFilters ? "Good finds start with your community. Be the first to share something on Emarketplace." : "Try a different search, category, or price range to find what you're looking for."}</p>{hasFilters ? <Button variant="outline" onClick={clearFilters}>Clear filters</Button> : savedOnly ? <Button variant="outline" onClick={() => setSavedOnly(false)}>Browse listings</Button> : <Button asChild><Link href="/create"><Plus size={17}/> Create a listing <ArrowRight size={16}/></Link></Button>}</div>
+      : filtered.length === 0 ? <div className="empty-state"><span className="empty-icon"><ShoppingBag size={36}/></span><h3>{savedOnly ? hasFilters ? "No saved listings match" : "No saved listings yet" : listings.length === 0 && !hasFilters ? "No listings yet" : "No listings found"}</h3><p>{savedOnly ? "Save listings with the heart button to find them here. Try clearing any filters or browse for more favorites." : listings.length === 0 && !hasFilters ? "Good finds start with your community. Be the first to share something on Emarketplace." : "Try a different search, category, or price range to find what you're looking for."}</p>{hasFilters ? <Button variant="outline" onClick={clearFilters}>Clear filters</Button> : savedOnly ? <Button variant="outline" onClick={() => setSavedOnly(false)}>Browse listings</Button> : role === "seller" ? <Button asChild><Link href="/create"><Plus size={17}/> Create a listing <ArrowRight size={16}/></Link></Button> : <p>New products will appear here when sellers add listings.</p>}</div>
       : <div className="listing-grid">{filtered.map((item) => <ListingCard key={item.id} listing={item} selected={comparisonIds.includes(item.id)} compareDisabled={comparedListings.length >= MAX_COMPARISON_ITEMS} onToggleCompare={() => setComparisonIds(ids => toggleComparison(ids, item.id))}/>)}</div>}
     </section>
     <ListingComparison listings={comparedListings} onRemove={id => setComparisonIds(ids => ids.filter(value => value !== id))} onClear={() => setComparisonIds([])}/>

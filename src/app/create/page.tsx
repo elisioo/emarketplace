@@ -19,7 +19,7 @@ export default function CreatePage() {
       <div className="listing-type-divider"/>
       <Link href="/" className="listing-type-nav"><span><Store size={20}/></span>Browse listings</Link>
       <details className="seller-help"><summary className="listing-type-nav"><span><CircleHelp size={20}/></span>Seller help</summary>
-        <div className="seller-help-copy">Choose a listing type, add a clear photo, and fill in your item's details. Set a price and provide your email so buyers can contact you. No account needed.</div>
+        <div className="seller-help-copy">Choose a listing type, add a clear photo, and fill in your item's details. Set a price and provide your email so buyers can contact you. A seller account is required.</div>
       </details>
     </aside>
     <section className="listing-type-main" aria-labelledby="listing-type-heading">
@@ -32,7 +32,7 @@ export default function CreatePage() {
             <h3>{title}</h3><p>{description}</p><span className="listing-type-card-action">Get started <span aria-hidden="true">&rarr;</span></span>
           </Link>)}
         </div>
-        <p className="listing-type-note">Free to list. No login required.</p>
+        <p className="listing-type-note">Free to list with your seller account.</p>
       </div>
     </section>
   </main>;

@@ -1,10 +1,25 @@
 import { NextResponse } from "next/server";
 import { getSupabase } from "@/lib/supabase";
-import { processSellerMessage, type MessageInput } from "@/lib/seller-messages";
+import { processSellerMessage, type MessageInput, type SavedChat } from "@/lib/seller-messages";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
+  const token = request.headers.get("authorization")?.match(/^Bearer (.+)$/i)?.[1];
+  if (!token) return NextResponse.json({ error: "Please log in to message a seller." }, { status: 401 });
+  const client = getSupabase(token);
+  if (!client) return NextResponse.json({ error: "Messaging is temporarily unavailable." }, { status: 503 });
+  let user;
+  try {
+    const { data, error } = await client.auth.getUser(token);
+    if (error || !data.user?.email) return NextResponse.json({ error: "Your session expired. Please log in again." }, { status: 401 });
+    user = data.user;
+    const { data: profile, error: profileError } = await client.from("profiles").select("role").eq("id", user.id).maybeSingle();
+    if (profileError) return NextResponse.json({ error: "Your account profile could not be loaded." }, { status: 503 });
+    if (!profile?.role) return NextResponse.json({ error: "Choose your account type before sending messages." }, { status: 403 });
+  } catch {
+    return NextResponse.json({ error: "Account verification is unavailable. Please try again." }, { status: 503 });
+  }
   let input: MessageInput;
   try {
     const body = await request.text();
@@ -16,19 +31,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid message request." }, { status: 400 });
   }
 
-  const client = getSupabase();
-  if (!client) return NextResponse.json({ error: "Messaging is temporarily unavailable." }, { status: 503 });
-
   const result = await processSellerMessage(input, {
-    newId: () => crypto.randomUUID(),
-    findListing: async id => {
-      const { data, error } = await client.from("listings").select("id,title,seller_email").eq("id", id).maybeSingle();
-      if (error) throw new Error("Listing lookup failed");
-      return data;
-    },
     saveMessage: async message => {
-      const { error } = await client.from("messages").insert(message);
-      if (error) throw new Error("Message save failed");
+      const { data, error } = await client.rpc("send_chat_message", {
+        p_message_id: message.messageId, p_message: message.message,
+        p_conversation_id: message.conversationId, p_listing_id: message.listingId,
+      });
+      if (error) throw error;
+      return data as SavedChat;
     },
     sendEmail: async email => {
       const key = process.env.RESEND_API_KEY;

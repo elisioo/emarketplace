@@ -13,10 +13,12 @@ import { Card } from "@/components/ui/card";
 import { ALLOWED_IMAGE_TYPES, formatPrice, validateEmail, validatePhoto, LISTING_TYPES, isCategoryAllowed, type ListingType } from "@/lib/marketplace";
 import { LoadingIndicator } from "@/components/marketplace/loading";
 import { LoadingImage } from "@/components/marketplace/loading-image";
+import { useAuth } from "@/components/auth/auth-provider";
 import { getSupabase } from "@/lib/supabase";
 
 export function CreateListing({ listingType = "item" }: { listingType?: ListingType }) {
   const config = LISTING_TYPES[listingType];
+  const { user, role } = useAuth();
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -28,6 +30,10 @@ export function CreateListing({ listingType = "item" }: { listingType?: ListingT
   const [preview, setPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user?.email) setEmail(user.email);
+  }, [user?.email]);
 
   useEffect(() => {
     if (!file) { setPreview(null); return; }
@@ -49,6 +55,7 @@ export function CreateListing({ listingType = "item" }: { listingType?: ListingT
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy) return;
+    if (!user?.email || role !== "seller") { setError("Log in with a seller account to publish a listing."); return; }
     setError(null);
     const photoIssue = validatePhoto(file);
     if (photoIssue) { setError(photoIssue); return; }
@@ -70,7 +77,7 @@ export function CreateListing({ listingType = "item" }: { listingType?: ListingT
       const { data: urlData } = client.storage.from("listing-images").getPublicUrl(uploaded.path);
       const { data: created, error: insertError } = await client.from("listings").insert({
         title: title.trim(), description: description.trim(), price: amount, category,
-        seller_email: email.trim(), image_url: urlData.publicUrl,
+        seller_id: user.id, seller_email: user.email, image_url: urlData.publicUrl,
         location: location.trim() || "Palo Alto, CA",
       }).select("id").single();
       if (insertError) throw new Error(`Listing could not be saved: ${insertError.message}`);
@@ -103,7 +110,7 @@ export function CreateListing({ listingType = "item" }: { listingType?: ListingT
         </Card>
         <Card className="form-card">
           <div className="form-section-heading"><span className="section-number">03</span><div><h2>Where to find you</h2><p>Give buyers a way to reach you.</p></div></div>
-          <div className="field"><Label htmlFor="listing-email">Seller email <span className="required">*</span></Label><Input id="listing-email" type="email" required value={email} onChange={(e)=>setEmail(e.target.value)} placeholder="hello@example.com"/><p className="field-hint">Displayed publicly on your listing for this coding test.</p></div>
+          <div className="field"><Label htmlFor="listing-email">Seller email <span className="required">*</span></Label><Input id="listing-email" readOnly type="email" required value={email} onChange={(e)=>setEmail(e.target.value)} placeholder="hello@example.com"/><p className="field-hint">Your account email is used for seller notifications and shown on this listing.</p></div>
           <div className="field"><Label htmlFor="listing-location">Location</Label><div className="relative"><MapPin className="absolute left-3 top-3 text-muted" size={17}/><Input id="listing-location" maxLength={255} className="pl-9" value={location} onChange={(e)=>setLocation(e.target.value)} /></div></div>
         </Card>
         {error && <div className="form-error" role="alert"><CircleAlert size={18}/>{error}</div>}

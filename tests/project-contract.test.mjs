@@ -28,16 +28,15 @@ test("detail page queries listing by id", () => {
   const code = read("src/components/marketplace/item-detail.tsx");
   assert.match(code, /\.eq\("id", id\)\.single\(\)/);
 });
-test("message seller saves through the server and reports email status truthfully", () => {
+test("message seller opens private chat and the server uses the authorized chat RPC", () => {
   const ui = read("src/components/marketplace/item-detail.tsx");
-  const code = read("src/lib/seller-messages.ts");
+  const window = read("src/components/chat/chat-window.tsx");
   const route = read("src/app/api/messages/route.ts");
-  assert.match(ui, /fetch\("\/api\/messages"/);
-  assert.match(route, /\.from\("messages"\)\.insert\(/);
-  for (const field of ["listing_id", "buyer_email", "seller_email", "message"])
-    assert.match(code, new RegExp(`\\b${field}(?:\\s*:|\\s*[,}])`));
-  assert.match(ui, /emailStatus === "sent"/);
-  assert.doesNotMatch(ui, /RESEND_API_KEY/);
+  assert.match(ui, /openListing\(listing\)/);
+  assert.match(window, /fetch\("\/api\/messages"/);
+  assert.match(route, /auth\.getUser\(token\)/);
+  assert.match(route, /rpc\("send_chat_message"/);
+  assert.doesNotMatch(window, /RESEND_API_KEY/);
 });
 test("no secrets embedded", () => {
   const code = read("src/lib/supabase.ts");

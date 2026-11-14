@@ -30,6 +30,10 @@ export type Listing = {
   price: number;
   category: string;
   seller_email: string;
+  seller_id?: string | null;
+  status?: "available" | "reserved" | "sold";
+  payments_enabled?: boolean;
+  sold_at?: string | null;
   image_url: string | null;
   location: string | null;
   created_at: string | null;

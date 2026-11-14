@@ -12,6 +12,7 @@ export function ListingCard({ listing, selected = false, compareDisabled = false
         <div className="listing-image-wrap">
           {listing.image_url ? <LoadingImage src={listing.image_url} alt={listing.title} loading="lazy" className="listing-photo" />
           : <div className="listing-image-placeholder"><ImageOff size={32} /><span>No photo yet</span></div>}
+          {listing.status === "sold" && <span className="listing-sold-badge">Sold</span>}
           <span className="listing-open"><ArrowUpRight size={16}/></span>
         </div>
         <div className="listing-body">
