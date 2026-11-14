@@ -848,11 +848,11 @@ body:has(.compare-tray) .assistant-launcher { bottom: 145px; }
 body:has(.compare-tray) .assistant-panel { bottom: 218px; height: min(500px, calc(100dvh - 245px)); }
 
 /* Emarketplace system palette: blush surfaces and lavender accents. */
-:root { --market-bg: #fff7fb; --market-ink: #3d2d4c; --market-purple: #8951a8; --market-purple-dark: #71408d; --market-pink: #fae7f1; --market-lavender: #f1e8f9; --market-border: #eadcec; }
+:root { --market-bg: #ffffff; --market-ink: #3d2d4c; --market-purple: #8951a8; --market-purple-dark: #71408d; --market-pink: #fae7f1; --market-lavender: #f1e8f9; --market-border: #eadcec; }
 body { background: var(--market-bg); color: var(--market-ink); }
-.site-header { background: linear-gradient(110deg, #ffffff, #fff8fc 55%, #f7f1ff); border-bottom-color: var(--market-border); }
+.site-header { background: #ffffff; border-bottom-color: var(--market-border); }
 .brand-name, .brand-link { color: var(--market-purple); }
-.sidebar-panel, .listing-type-sidebar { background: #fffcfe; border-color: var(--market-border); }
+.sidebar-panel, .listing-type-sidebar { background: #ffffff; border-color: var(--market-border); }
 .header-icon { background: var(--market-lavender); color: #78578e; }
 .header-icon:hover, .header-icon.active { background: #ead8f5; color: var(--market-purple-dark); }
 .market-toolbar h2, .side-intro h1, .side-heading, .listing-type-sidebar h1, .listing-type-content h2 { color: var(--market-ink); }

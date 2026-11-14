@@ -7,7 +7,7 @@ const config: Config = {
       colors: {
         ink: "#3d2d4c",
         brand: "#8951a8",
-        canvas: "#fff7fb",
+        canvas: "#ffffff",
         line: "#eadcec",
         muted: "#8e749b",
       },
