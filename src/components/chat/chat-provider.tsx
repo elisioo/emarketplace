@@ -10,6 +10,7 @@ import { X, MessageCircle } from "lucide-react";
 
 type ChatContextValue = {
   inbox: Conversation[]; unread: number; loading: boolean; error: string | null;
+  hasActiveChat: boolean; closeChat: () => void;
   refresh: () => Promise<void>; openConversation: (conversation: Conversation) => void; openListing: (listing: Listing) => void;
 };
 const ChatContext = createContext<ChatContextValue | null>(null);
@@ -91,7 +92,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     if (existing) openConversation(existing);
     else setActive({ windowKey: `listing:${listing.id}`, listingId: listing.id, title: listing.title, peerEmail: listing.seller_email });
   }
-  return <ChatContext.Provider value={{ inbox: ownInbox, unread: unreadTotal(ownInbox), loading, error, refresh, openConversation, openListing }}>
+  return <ChatContext.Provider value={{ inbox: ownInbox, unread: unreadTotal(ownInbox), loading, error, refresh, openConversation, openListing, hasActiveChat: !!active && owner === user?.id, closeChat: () => setActive(null) }}>
     {children}
     {user && role && owner === user.id && active && <ChatWindow key={active.windowKey} target={active} onClose={() => setActive(null)} onSaved={conversationId => setActive(current => current ? { ...current, conversationId } : current)} />}
     {user && owner === user.id && notice && <aside className="chat-toast" aria-label="New message" role="status"><MessageCircle size={22}/><button className="chat-toast-content" type="button" onClick={() => openConversation(notice)}><strong>New message about {notice.listing_title}</strong><span>{notice.last_message}</span><small>Open conversation</small></button><button type="button" className="chat-icon-button" aria-label="Dismiss message notification" onClick={() => setNotice(null)}><X size={16}/></button></aside>}

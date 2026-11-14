@@ -226,3 +226,13 @@ src/
 supabase/                      # Schema and privacy policy reference
 tests/                        # Automated checks
 ```
+
+## AI shopping assistant
+
+A floating assistant at the bottom right uses `public/gif/bot.gif` for its button and avatar. It is available to signed-in users and stays separate from private buyer-seller conversations. Opening seller chat closes the bot panel; opening the bot closes seller chat so the windows do not overlap.
+
+Set `GROQ_API_KEY` (or the existing `GROQ_API` alias) in `.env.local` and Vercel Production as a server-only Secret. `GROQ_MODEL` optionally changes the model; the default is `openai/gpt-oss-20b`. The endpoint uses the Vercel AI SDK with the direct Groq provider. Neither key is exposed to browser code.
+
+The assistant answers marketplace help questions using a bounded conversation history, the current listing when applicable, and a sample of 12 available listings. Only product IDs, titles, prices, categories, locations, and availability are included. Private messages, order records, account emails, and balances are not sent as context. The assistant has no tools to make purchases, send seller messages, or change data. Replies are rendered as text with safe internal listing links. Conversation history stays in memory and clears on account changes or New conversation.
+
+The server authenticates each request, verifies a completed account profile, validates roles and input sizes, and limits model output and response time. If Groq is unavailable, the panel offers Retry. Use the suggested questions to test buying, selling, and product comparison help.

@@ -5,6 +5,7 @@ import { WishlistProvider } from "@/components/marketplace/wishlist-provider";
 import { AuthProvider } from "@/components/auth/auth-provider";
 import { AuthGate } from "@/components/auth/auth-gate";
 import { ChatProvider } from "@/components/chat/chat-provider";
+import { MarketplaceAssistant } from "@/components/assistant/marketplace-assistant";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -14,5 +15,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en"><body><AuthProvider><WishlistProvider><ChatProvider><ScrollbarVisibility/><SiteHeader /><AuthGate>{children}</AuthGate></ChatProvider></WishlistProvider></AuthProvider></body></html>;
+  return <html lang="en"><body><AuthProvider><WishlistProvider><ChatProvider><ScrollbarVisibility/><SiteHeader /><AuthGate>{children}</AuthGate><MarketplaceAssistant/></ChatProvider></WishlistProvider></AuthProvider></body></html>;
 }
